@@ -119,6 +119,33 @@ app.get('/api/parent-users', async (req, res) => {
   }
 });
 
+// Google+PIN parent registration endpoint
+app.post('/api/register-parent-google', async (req, res) => {
+  console.log('register-parent-google body:', req.body);
+  const { email, googleId, pin } = req.body;
+  if (!email || !googleId || !pin || pin.length !== 4) {
+    return res.status(400).json({ error: 'Missing or invalid fields' });
+  }
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    // Check if parent already exists by email or googleId
+    const [existing] = await conn.query('SELECT id FROM users WHERE username = ? OR google_id = ?', [email, googleId]);
+    if (existing) {
+      return res.status(409).json({ error: 'Parent account already exists' });
+    }
+    // Hash the PIN for storage
+    const hash = await bcrypt.hash(pin, 10);
+    await conn.query('INSERT INTO users (username, password_hash, role, google_id) VALUES (?, ?, ?, ?)', [email, hash, 'parent', googleId]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('register-parent-google error:', err);
+    res.status(500).json({ error: err.message });
+  } finally {
+    if (conn) conn.release();
+  }
+});
+
 const PORT = 8080;
 waitForDb().then(() => {
   app.listen(PORT, () => {
