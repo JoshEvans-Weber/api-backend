@@ -1,0 +1,9 @@
+{
+  "name": "family-chore-tv-api",
+  "version": "1.0.0",
+  "main": "server.js",
+  "license": "MIT",
+  "dependencies": {
+    "bcryptjs": "^2.4.3"
+  }
+}

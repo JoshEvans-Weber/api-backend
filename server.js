@@ -34,14 +34,24 @@ async function waitForDb() {
 
 app.get('/api/chores', async (req, res) => {
   let conn;
+  let logs = [];
+  function log(msg) {
+    logs.push(`[${new Date().toISOString()}] ${msg}`);
+    console.log(msg);
+  }
   try {
+    log('Received request for /api/chores');
     conn = await pool.getConnection();
+    log('Successfully connected to MariaDB');
     const rows = await conn.query('SELECT choreName, description, moneyEarned, priority FROM Chores');
-    res.json(rows);
+    log(`Fetched ${rows.length} chores from database`);
+    res.json({ logs, data: rows });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    log(`Error: ${err.message}`);
+    res.status(500).json({ logs, error: err.message });
   } finally {
     if (conn) conn.release();
+    log('Connection released');
   }
 });
 

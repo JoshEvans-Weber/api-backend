@@ -17,7 +17,7 @@ services:
     build: .
     container_name: familychoretv-api
     environment:
-      DB_HOST: mariadb
+      DB_HOST: mariadb-mariadb-1
       DB_USER: root
       DB_PASSWORD: ""
       DB_NAME: FamilyChoreTV
@@ -25,6 +25,7 @@ services:
       - "8080:8080"
     depends_on:
       - mariadb
+    command: sh -c "npm install bcryptjs && npm install && node server.js"
 
 volumes:
   mariadb_data:
