@@ -14,7 +14,7 @@ services:
       - mariadb_data:/var/lib/mysql
 
   api:
-    build: ./api-backend
+    build: .
     container_name: familychoretv-api
     environment:
       DB_HOST: mariadb
