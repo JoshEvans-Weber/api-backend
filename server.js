@@ -1,9 +1,11 @@
 const express = require('express');
 const mariadb = require('mariadb');
 const cors = require('cors');
+const bcrypt = require('bcryptjs');
 
 const app = express();
 app.use(cors());
+app.use(express.json());
 
 const pool = mariadb.createPool({
   host: process.env.DB_HOST || 'localhost',
@@ -52,6 +54,68 @@ app.get('/api/chores', async (req, res) => {
   } finally {
     if (conn) conn.release();
     log('Connection released');
+  }
+});
+
+// User registration endpoint
+app.post('/api/register', async (req, res) => {
+  const { username, password, role } = req.body;
+  if (!username || !password || !role || !['parent', 'kid'].includes(role)) {
+    return res.status(400).json({ error: 'Missing or invalid fields' });
+  }
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    const [existing] = await conn.query('SELECT id FROM users WHERE username = ?', [username]);
+    if (existing) {
+      return res.status(409).json({ error: 'Username already exists' });
+    }
+    const hash = await bcrypt.hash(password, 10);
+    await conn.query('INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)', [username, hash, role]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  } finally {
+    if (conn) conn.release();
+  }
+});
+
+// User login endpoint
+app.post('/api/login', async (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password) {
+    return res.status(400).json({ error: 'Missing fields' });
+  }
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    const [user] = await conn.query('SELECT id, username, password_hash, role FROM users WHERE username = ?', [username]);
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid username or password' });
+    }
+    const match = await bcrypt.compare(password, user.password_hash);
+    if (!match) {
+      return res.status(401).json({ error: 'Invalid username or password' });
+    }
+    res.json({ id: user.id, username: user.username, role: user.role });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  } finally {
+    if (conn) conn.release();
+  }
+});
+
+// Endpoint to get all parent users
+app.get('/api/parent-users', async (req, res) => {
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    const rows = await conn.query("SELECT id, username FROM users WHERE role = 'parent'");
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  } finally {
+    if (conn) conn.release();
   }
 });
 

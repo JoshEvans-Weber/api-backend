@@ -4,10 +4,10 @@ services:
     image: mariadb:11
     container_name: mariadb
     environment:
-      MYSQL_ROOT_PASSWORD: ""
+      MYSQL_ROOT_PASSWORD: "camp3rjake"
       MYSQL_DATABASE: FamilyChoreTV
-      MYSQL_USER: root
-      MYSQL_PASSWORD: ""
+      MYSQL_USER: remote
+      MYSQL_PASSWORD: "camp3rjake"
     ports:
       - "3306:3306"
     volumes:
@@ -15,11 +15,12 @@ services:
 
   api:
     build: .
+    image: familychoretv-api:latest
     container_name: familychoretv-api
     environment:
       DB_HOST: mariadb-mariadb-1
-      DB_USER: root
-      DB_PASSWORD: ""
+      DB_USER: remote
+      DB_PASSWORD: "camp3rjake"
       DB_NAME: FamilyChoreTV
     ports:
       - "8080:8080"
