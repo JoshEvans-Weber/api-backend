@@ -1,0 +1,30 @@
+version: '3.8'
+services:
+  mariadb:
+    image: mariadb:11
+    container_name: mariadb
+    environment:
+      MYSQL_ROOT_PASSWORD: ""
+      MYSQL_DATABASE: FamilyChoreTV
+      MYSQL_USER: root
+      MYSQL_PASSWORD: ""
+    ports:
+      - "3306:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+
+  api:
+    build: ./api-backend
+    container_name: familychoretv-api
+    environment:
+      DB_HOST: mariadb
+      DB_USER: root
+      DB_PASSWORD: ""
+      DB_NAME: FamilyChoreTV
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mariadb
+
+volumes:
+  mariadb_data:
