@@ -13,6 +13,25 @@ const pool = mariadb.createPool({
   connectionLimit: 5
 });
 
+// Wait for MariaDB to be ready before starting the server
+async function waitForDb() {
+  let retries = 15;
+  while (retries) {
+    try {
+      let conn = await pool.getConnection();
+      await conn.ping();
+      conn.release();
+      console.log('Connected to MariaDB!');
+      return;
+    } catch (err) {
+      console.log('Waiting for MariaDB...', err.message);
+      retries -= 1;
+      await new Promise(res => setTimeout(res, 4000));
+    }
+  }
+  throw new Error('Could not connect to MariaDB after multiple attempts');
+}
+
 app.get('/api/chores', async (req, res) => {
   let conn;
   try {
@@ -27,6 +46,11 @@ app.get('/api/chores', async (req, res) => {
 });
 
 const PORT = 8080;
-app.listen(PORT, () => {
-  console.log(`API server running on http://0.0.0.0:${PORT}`);
+waitForDb().then(() => {
+  app.listen(PORT, () => {
+    console.log(`API server running on http://0.0.0.0:${PORT}`);
+  });
+}).catch(err => {
+  console.error(err);
+  process.exit(1);
 });
