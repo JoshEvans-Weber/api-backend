@@ -12,13 +12,14 @@ services:
       - "3306:3306"
     volumes:
       - mariadb_data:/var/lib/mysql
+    restart: unless-stopped
 
   api:
     build: .
     image: familychoretv-api:latest
     container_name: familychoretv-api
     environment:
-      DB_HOST: mariadb-mariadb-1
+      DB_HOST: mariadb
       DB_USER: remote
       DB_PASSWORD: "camp3rjake"
       DB_NAME: FamilyChoreTV
@@ -27,6 +28,7 @@ services:
     depends_on:
       - mariadb
     command: sh -c "npm install bcryptjs && npm install && node server.js"
+    restart: unless-stopped
 
 volumes:
   mariadb_data:
